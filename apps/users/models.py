@@ -45,7 +45,7 @@ class User(PermissionsMixin, AbstractBaseUser):
     )
     is_active = models.BooleanField(
         default=False,
-        help_text="Designate whether this user should be treated as active."
+        help_text="Designate whether this user should be treated as active.",
     )
 
     created_on = models.DateTimeField(auto_now_add=True)
