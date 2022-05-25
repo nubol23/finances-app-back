@@ -1,12 +1,9 @@
 from rest_framework.serializers import ModelSerializer
 
 from apps.transactions.models import Transaction
-from apps.users.serializers import UserSerializer
 
 
 class TransactionSerializer(ModelSerializer):
-    user = UserSerializer()
-
     class Meta:
         model = Transaction
         fields = (
@@ -17,10 +14,7 @@ class TransactionSerializer(ModelSerializer):
             "value",
             "type",
         )
-        read_only_fields = (
-            "id",
-            "user",
-        )
+        read_only_fields = ("id",)
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
