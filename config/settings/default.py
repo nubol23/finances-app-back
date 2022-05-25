@@ -24,11 +24,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-# CORS_ORIGIN_ALLOW_ALL = True
-CORS_ORIGIN_WHITELIST = ["http://localhost:3000"]
+ALLOWED_HOSTS = []
 
 AUTH_USER_MODEL = "users.User"
 
@@ -59,7 +56,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
 ]
 
-ROOT_URLCONF = "finances.urls"
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
@@ -77,7 +74,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "finances.wsgi.application"
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
@@ -150,6 +147,6 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
-    "ACCESS_TOKEN_LIFETIME": dt.timedelta(days=10),
-    "REFRESH_TOKEN_LIFETIME": dt.timedelta(days=20),
+    "ACCESS_TOKEN_LIFETIME": dt.timedelta(hours=1),
+    "REFRESH_TOKEN_LIFETIME": dt.timedelta(days=30),
 }
