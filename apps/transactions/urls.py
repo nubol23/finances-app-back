@@ -9,4 +9,9 @@ urlpatterns = [
         TransactionViewSet.as_view({"get": "list", "post": "create"}),
         name="transactions-list",
     ),
+    path(
+        "/<transaction_id>/",
+        TransactionViewSet.as_view({"get": "retrieve"}),
+        name="transactions-details",
+    ),
 ]

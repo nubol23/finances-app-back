@@ -63,3 +63,36 @@ class TransactionCreateViewSetTests(CustomTestCase):
 
         transaction = Transaction.objects.latest("created_on")
         ValidateTransaction.validate(self, transaction, response.json())
+
+
+class TransactionRetrieveViewSetTests(CustomTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = UserFactory()
+
+        cls.transaction = TransactionFactory(user=cls.user)
+
+        cls.url = reverse(
+            "transactions:transactions-details",
+            kwargs={"transaction_id": cls.transaction.id},
+        )
+
+    def setUp(self):
+        self.backend.login(self.user)
+
+    def test_retrieve_transaction(self):
+        response = self.backend.get(self.url, status=status.HTTP_200_OK)
+
+        ValidateTransaction.validate(self, self.transaction, response.json())
+
+    def test_retrieve_transaction_without_access(self):
+        another_transaction = TransactionFactory()
+
+        url = reverse(
+            "transactions:transactions-details",
+            kwargs={"transaction_id": another_transaction.id},
+        )
+        response = self.backend.get(url, status=status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.json()["detail"], "User does not have access to this transaction"
+        )
