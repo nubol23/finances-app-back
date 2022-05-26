@@ -1,6 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from django.urls import reverse
+from freezegun import freeze_time
 from rest_framework import status
 
 from apps.transactions.enums import TransactionType
@@ -13,7 +14,11 @@ from utils.tests.validation import ValidateMultiple
 
 
 class TransactionListViewSetTests(CustomTestCase):
+
+    FREEZE_TIME = "2022-01-01T00:00:00Z"
+
     @classmethod
+    @freeze_time(FREEZE_TIME)
     def setUpTestData(cls):
         cls.user = UserFactory()
 
@@ -34,6 +39,37 @@ class TransactionListViewSetTests(CustomTestCase):
             self,
             ValidateTransaction.validate,
             self.transactions,
+            response.json(),
+        )
+
+    @freeze_time(FREEZE_TIME)
+    def test_list_user_by_month_year(self):
+        self.transactions[1].date += timedelta(days=32)
+        self.transactions[1].save()
+        self.transactions[2].date += timedelta(days=397)
+        self.transactions[2].save()
+
+        response = self.backend.get(self.url, data={"month_year": "01-2022"})
+        ValidateMultiple.validate(
+            self,
+            ValidateTransaction.validate,
+            [self.transactions[0]],
+            response.json(),
+        )
+
+        response = self.backend.get(self.url, data={"month_year": "02-2022"})
+        ValidateMultiple.validate(
+            self,
+            ValidateTransaction.validate,
+            [self.transactions[1]],
+            response.json(),
+        )
+
+        response = self.backend.get(self.url, data={"month_year": "02-2023"})
+        ValidateMultiple.validate(
+            self,
+            ValidateTransaction.validate,
+            [self.transactions[2]],
             response.json(),
         )
 

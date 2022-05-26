@@ -22,4 +22,10 @@ class TransactionViewSet(CustomModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         qs = qs.filter(user=self.request.user)
+
+        month_year = self.request.query_params.get("month_year")
+        if month_year:
+            month, year = month_year.split("-")
+            qs = qs.filter(date__month=month, date__year=year)
+
         return qs
