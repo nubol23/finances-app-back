@@ -9,9 +9,15 @@ from utils.views import CustomModelViewSet
 class TransactionViewSet(CustomModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated, HasTransactionAccess]
+    permission_classes = [IsAuthenticated]
     lookup_field = "id"
     lookup_url_kwarg = "transaction_id"
+
+    def get_permissions(self):
+        if self.action in ["retrieve", "partial_update", "delete"]:
+            self.permission_classes = self.permission_classes + [HasTransactionAccess]
+
+        return super().get_permissions()
 
     def get_queryset(self):
         qs = super().get_queryset()
