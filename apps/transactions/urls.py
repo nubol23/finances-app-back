@@ -11,7 +11,12 @@ urlpatterns = [
     ),
     path(
         "/<transaction_id>/",
-        TransactionViewSet.as_view({"get": "retrieve"}),
+        TransactionViewSet.as_view(
+            {
+                "get": "retrieve",
+                "patch": "partial_update",
+            }
+        ),
         name="transactions-details",
     ),
 ]

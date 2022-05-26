@@ -85,7 +85,7 @@ class TransactionRetrieveViewSetTests(CustomTestCase):
 
         ValidateTransaction.validate(self, self.transaction, response.json())
 
-    def test_retrieve_transaction_without_access(self):
+    def test_retrieve_transaction_without_access_fail(self):
         another_transaction = TransactionFactory()
 
         url = reverse(
@@ -93,6 +93,48 @@ class TransactionRetrieveViewSetTests(CustomTestCase):
             kwargs={"transaction_id": another_transaction.id},
         )
         response = self.backend.get(url, status=status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.json()["detail"], "User does not have access to this transaction"
+        )
+
+
+class TransactionUpdateViewSetTests(CustomTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = UserFactory()
+
+        cls.transaction = TransactionFactory(user=cls.user)
+
+        cls.url = reverse(
+            "transactions:transactions-details",
+            kwargs={"transaction_id": cls.transaction.id},
+        )
+
+        cls.data = {
+            "date": datetime.now(tz=timezone.utc),
+            "title": "Transaction 1",
+            "description": "A transaction",
+            "value": 12.3,
+            "type": TransactionType.INCOME,
+        }
+
+    def setUp(self):
+        self.backend.login(self.user)
+
+    def test_update_transaction(self):
+        response = self.backend.patch(self.url, self.data, status=status.HTTP_200_OK)
+
+        self.transaction.refresh_from_db()
+        ValidateTransaction.validate(self, self.transaction, response.json())
+
+    def test_update_transaction_without_access_fail(self):
+        another_transaction = TransactionFactory()
+
+        url = reverse(
+            "transactions:transactions-details",
+            kwargs={"transaction_id": another_transaction.id},
+        )
+        response = self.backend.patch(url, self.data, status=status.HTTP_403_FORBIDDEN)
         self.assertEqual(
             response.json()["detail"], "User does not have access to this transaction"
         )
