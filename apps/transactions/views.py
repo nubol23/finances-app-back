@@ -1,5 +1,10 @@
+from django.db.models import Sum
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
+from apps.transactions.enums import TransactionType
 from apps.transactions.models import Transaction
 from apps.transactions.permissions import HasTransactionAccess
 from apps.transactions.serializers import TransactionSerializer
@@ -29,3 +34,17 @@ class TransactionViewSet(CustomModelViewSet):
             qs = qs.filter(date__month=month, date__year=year)
 
         return qs
+
+    @action(detail=False, methods=["get"])
+    def summary(self, *args, **kwargs):
+        qs = self.get_queryset()
+
+        income = qs.filter(type=TransactionType.INCOME).aggregate(value=Sum("value"))[
+            "value"
+        ]
+        expense = qs.filter(type=TransactionType.EXPENSE).aggregate(value=Sum("value"))[
+            "value"
+        ]
+        data = {"income": income, "expense": expense, "total": income - expense}
+
+        return Response(data, status=status.HTTP_200_OK)

@@ -9,8 +9,9 @@ urlpatterns = [
         TransactionViewSet.as_view({"get": "list", "post": "create"}),
         name="transactions-list",
     ),
+    path("summary/", TransactionViewSet.as_view({"get": "summary"}), name="summary"),
     path(
-        "/<transaction_id>/",
+        "<transaction_id>/",
         TransactionViewSet.as_view(
             {
                 "get": "retrieve",

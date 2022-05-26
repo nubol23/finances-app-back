@@ -34,7 +34,7 @@ class TransactionListViewSetTests(CustomTestCase):
     def test_list_user_all_transactions(self):
         response = self.backend.get(self.url, status=status.HTTP_200_OK)
 
-        self.transactions.reverse()
+        # self.transactions.reverse()
         ValidateMultiple.validate(
             self,
             ValidateTransaction.validate,
@@ -49,7 +49,9 @@ class TransactionListViewSetTests(CustomTestCase):
         self.transactions[2].date += timedelta(days=397)
         self.transactions[2].save()
 
-        response = self.backend.get(self.url, data={"month_year": "01-2022"})
+        response = self.backend.get(
+            self.url, data={"month_year": "01-2022"}, status=status.HTTP_200_OK
+        )
         ValidateMultiple.validate(
             self,
             ValidateTransaction.validate,
@@ -57,7 +59,9 @@ class TransactionListViewSetTests(CustomTestCase):
             response.json(),
         )
 
-        response = self.backend.get(self.url, data={"month_year": "02-2022"})
+        response = self.backend.get(
+            self.url, data={"month_year": "02-2022"}, status=status.HTTP_200_OK
+        )
         ValidateMultiple.validate(
             self,
             ValidateTransaction.validate,
@@ -65,7 +69,9 @@ class TransactionListViewSetTests(CustomTestCase):
             response.json(),
         )
 
-        response = self.backend.get(self.url, data={"month_year": "02-2023"})
+        response = self.backend.get(
+            self.url, data={"month_year": "02-2023"}, status=status.HTTP_200_OK
+        )
         ValidateMultiple.validate(
             self,
             ValidateTransaction.validate,
@@ -201,3 +207,43 @@ class TransactionDeleteViewSetTests(CustomTestCase):
 
         self.assertFalse(Transaction.objects.filter(id=self.transaction.id).exists())
         self.assertEqual(Transaction.objects.count(), count - 1)
+
+
+class TransactionSummaryViewSetTests(CustomTestCase):
+    FREEZE_TIME = "2022-01-01T00:00:00Z"
+
+    @classmethod
+    @freeze_time(FREEZE_TIME)
+    def setUpTestData(cls):
+        cls.user = UserFactory()
+
+        cls.expense_transactions = TransactionFactory.create_batch(
+            size=3, user=cls.user
+        )
+        cls.income_transactions = TransactionFactory.create_batch(
+            size=3, user=cls.user, type=TransactionType.INCOME
+        )
+
+        cls.url = reverse("transactions:summary")
+
+    def setUp(self):
+        self.backend.login(self.user)
+
+    def _transaction_sum(self, transaction_list):
+        res = 0
+        for transaction in transaction_list:
+            res += transaction.value
+
+        return res
+
+    def test_transaction_summary(self):
+        response = self.backend.get(
+            self.url, data={"month_year": "01-2022"}, status=status.HTTP_200_OK
+        )
+        response_json = response.json()
+
+        expense = self._transaction_sum(self.expense_transactions)
+        income = self._transaction_sum(self.income_transactions)
+        self.assertEqual(response_json["income"], income)
+        self.assertEqual(response_json["expense"], expense)
+        self.assertEqual(response_json["total"], income - expense)
