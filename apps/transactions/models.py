@@ -10,8 +10,8 @@ from utils.models import BaseModel
 class Transaction(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     date = models.DateTimeField()
-    title = models.CharField()
-    description = models.CharField()
+    title = models.CharField(max_length=150)
+    description = models.CharField(max_length=255, null=True, blank=True)
     value = models.FloatField()
     type = models.CharField(
         max_length=10,
