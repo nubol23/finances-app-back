@@ -57,12 +57,15 @@ class TransactionCreateViewSetTests(CustomTestCase):
         self.backend.login(self.user)
 
     def test_create_transaction(self):
+        count = Transaction.objects.count()
+
         response = self.backend.post(
             self.url, self.data, status=status.HTTP_201_CREATED
         )
 
         transaction = Transaction.objects.latest("created_on")
         ValidateTransaction.validate(self, transaction, response.json())
+        self.assertEqual(Transaction.objects.count(), count + 1)
 
 
 class TransactionRetrieveViewSetTests(CustomTestCase):
@@ -138,3 +141,27 @@ class TransactionUpdateViewSetTests(CustomTestCase):
         self.assertEqual(
             response.json()["detail"], "User does not have access to this transaction"
         )
+
+
+class TransactionDeleteViewSetTests(CustomTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = UserFactory()
+
+        cls.transaction = TransactionFactory(user=cls.user)
+
+        cls.url = reverse(
+            "transactions:transactions-details",
+            kwargs={"transaction_id": cls.transaction.id},
+        )
+
+    def setUp(self):
+        self.backend.login(self.user)
+
+    def test_update_transaction(self):
+        count = Transaction.objects.count()
+
+        self.backend.delete(self.url, status=status.HTTP_204_NO_CONTENT)
+
+        self.assertFalse(Transaction.objects.filter(id=self.transaction.id).exists())
+        self.assertEqual(Transaction.objects.count(), count - 1)
