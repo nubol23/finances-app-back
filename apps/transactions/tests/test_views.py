@@ -1,6 +1,10 @@
+from datetime import datetime, timezone
+
 from django.urls import reverse
 from rest_framework import status
 
+from apps.transactions.enums import TransactionType
+from apps.transactions.models import Transaction
 from apps.transactions.tests.factories import TransactionFactory
 from apps.transactions.tests.validators import ValidateTransaction
 from apps.users.tests.factories import UserFactory
@@ -32,3 +36,30 @@ class TransactionListViewSetTests(CustomTestCase):
             self.transactions,
             response.json(),
         )
+
+
+class TransactionCreateViewSetTests(CustomTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = UserFactory()
+
+        cls.url = reverse("transactions:transactions-list")
+
+        cls.data = {
+            "date": datetime.now(tz=timezone.utc),
+            "title": "Transaction 1",
+            "description": "A transaction",
+            "value": 12.3,
+            "type": TransactionType.INCOME,
+        }
+
+    def setUp(self):
+        self.backend.login(self.user)
+
+    def test_create_transaction(self):
+        response = self.backend.post(
+            self.url, self.data, status=status.HTTP_201_CREATED
+        )
+
+        transaction = Transaction.objects.latest("created_on")
+        ValidateTransaction.validate(self, transaction, response.json())
